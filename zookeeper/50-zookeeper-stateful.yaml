@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: zookeeper
+  namespace: titangrm-iot
+spec:
+  selector:
+    matchLabels:
+      app: zookeeper
+  serviceName: "zookeeper-server"
+  replicas: 3
+  updateStrategy:
+    type: RollingUpdate
+  podManagementPolicy: Parallel
+  template:
+    metadata:
+      labels:
+        app: zookeeper
+    spec:
+      terminationGracePeriodSeconds: 10
+      initContainers:
+      - name: zookeeper-init
+        image: titangrm/zookeeper-init:1.0
+        command: ['/bin/bash', '/etc/zookeeper-configmap/init-zookeeper.sh']
+        volumeMounts:
+        - name: configmap
+          mountPath: /etc/zookeeper-configmap
+        - name: config
+          mountPath: /conf
+        - name: data
+          mountPath: /zookeeper
+      containers:
+      - name: zookeeper
+        image: titangrm/zookeeper:3.4.13
+        env:
+        - name: ZOO_LOG4J_OPTS
+          value: -Dlog4j.configuration=file:/conf/log4j.properties
+        lifecycle:
+          preStop:
+            exec:
+             command: ["sh", "-ce", "kill -s TERM 1; while $(kill -0 1 2>/dev/null); do sleep 1; done"]
+        ports:
+        - containerPort: 2181
+          name: client
+        - containerPort: 2888
+          name: follower
+        - containerPort: 3888
+          name: election
+        resources:
+          requests:
+            cpu: 500m
+            memory: 2048Mi
+        readinessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - '[ "imok" = "$(echo ruok | nc -w 1 127.0.0.1 2181)" ]'
+        volumeMounts:
+        - name: config
+          mountPath: /conf
+        - name: data
+          mountPath: /zookeeper
+      volumes:
+      - name: configmap
+        configMap:
+          name: zookeeper-config
+      - name: config
+        emptyDir: {}
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: titangrm-iot-zookeeper
+      resources:
+        requests:
+          storage: 100Gi
