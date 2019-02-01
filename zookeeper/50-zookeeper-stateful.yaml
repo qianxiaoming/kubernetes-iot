@@ -7,7 +7,7 @@ spec:
   selector:
     matchLabels:
       app: zookeeper
-  serviceName: "zookeeper-server"
+  serviceName: "zookeeper-ensemble"
   replicas: 3
   updateStrategy:
     type: RollingUpdate

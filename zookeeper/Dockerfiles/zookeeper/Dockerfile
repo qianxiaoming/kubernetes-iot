@@ -1,16 +1,11 @@
-FROM openjdk:8-jre-alpine
+FROM titangrm/jdk8:alpine
 MAINTAINER titangrm-v2
 
 ARG DISTRO_NAME=zookeeper-3.4.13
 
-# Install required packages
-RUN apk add --no-cache \
-    bash \
-    su-exec
-
 ENV ZOO_USER=zookeeper \
     ZOO_CONF_DIR=/conf \
-    ZOO_DATA_BASE=/zookeeper \
+    ZOO_DATA_ROOT=/zookeeper \
     ZOO_DATA_DIR=/zookeeper/data \
     ZOO_DATA_LOG_DIR=/zookeeper/log \
     ZOO_LOG_DIR=/logs \
@@ -24,6 +19,7 @@ ENV ZOO_USER=zookeeper \
 
 # Add a user and make dirs, download zookeeper dist package
 RUN set -ex; \
+    apk add --no-cache bash su-exec; \
     adduser -D "$ZOO_USER"; \
     mkdir -p "$ZOO_DATA_LOG_DIR" "$ZOO_DATA_DIR" "$ZOO_CONF_DIR" "$ZOO_LOG_DIR"; \
     chown "$ZOO_USER:$ZOO_USER" "$ZOO_DATA_LOG_DIR" "$ZOO_DATA_DIR" "$ZOO_CONF_DIR" "$ZOO_LOG_DIR"; \
@@ -33,7 +29,7 @@ RUN set -ex; \
     rm -rf "$DISTRO_NAME.tar.gz"
 
 WORKDIR $DISTRO_NAME
-VOLUME ["$ZOO_DATA_BASE", "$ZOO_LOG_DIR"]
+VOLUME ["$ZOO_DATA_ROOT", "$ZOO_LOG_DIR"]
 
 EXPOSE $ZOO_PORT 2888 3888
 

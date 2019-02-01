@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kafka
+  namespace: titangrm-iot
+spec:
+  selector:
+    matchLabels:
+      app: kafka
+  serviceName: "kafka-broker"
+  replicas: 3
+  updateStrategy:
+    type: RollingUpdate
+  podManagementPolicy: Parallel
+  template:
+    metadata:
+      labels:
+        app: kafka
+      annotations:
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: kafka-broker
+        image: titangrm/kafka:2.1.0
+        env:
+        # Belows are used to make zookeeper.connect configuration
+        - name: ZK_PREFIX 
+          value: zookeeper-
+        - name: ZK_CLUSTER
+          value: zookeeper-ensemble
+        - name: KAFKA_DELETE_TOPIC_ENABLE
+          value: "true"
+        # Below is required when replicas = 1
+        #- name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+        #  value: 1
+        ports:
+        - name: client
+          containerPort: 9092
+        lifecycle:
+          preStop:
+            exec:
+             command: ["sh", "-ce", "kill -s TERM 1; while $(kill -0 1 2>/dev/null); do sleep 1; done"]
+        resources:
+          requests:
+            cpu: 2048m
+            memory: 2Gi
+        readinessProbe:
+          tcpSocket:
+            port: 9092
+          timeoutSeconds: 2
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/kafka/data
+      volumes:
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: titangrm-iot-kafka
+      resources:
+        requests:
+          storage: 100Gi
