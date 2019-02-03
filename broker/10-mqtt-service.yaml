@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mqtt-broker
+  namespace: titangrm-iot
+spec:
+  ports:
+  - port: 1883
+    name: default
+  - port: 8883
+    name: tls
+  clusterIP: None
+  selector:
+    app: mqtt-broker
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mqtt-server
+  namespace: titangrm-iot
+spec:
+  ports:
+  - port: 1883
+    name: default
+  - port: 8883
+    name: tls
+  selector:
+    app: mqtt-broker
+

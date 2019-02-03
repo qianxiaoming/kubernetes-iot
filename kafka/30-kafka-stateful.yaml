@@ -48,6 +48,8 @@ spec:
           tcpSocket:
             port: 9092
           timeoutSeconds: 2
+          initialDelaySeconds: 5
+          periodSeconds: 20
         volumeMounts:
         - name: data
           mountPath: /var/lib/kafka/data
