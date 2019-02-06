@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-connect
+  namespace: titangrm-iot
+spec:
+  selector:
+    matchLabels:
+      app: kafka-connect
+  replicas: 3
+  updateStrategy:
+    type: RollingUpdate
+  podManagementPolicy: Parallel
+  template:
+    metadata:
+      labels:
+        app: kafka-connect
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: kafka-connect
+        image: titangrm/kafka-connect:2.1.0
+        env:
+        - name: CONNECT_BOOTSTRAP_SERVERS 
+          value: kafka-server # service name for kafka client
+        - name: CONNECT_REST_PORT
+          value: 8082
+        - name: CONNECT_GROUP_ID
+          value: kafka-connect-group
+        - name: CONNECT_TOPIC_REPLICATION_FACTOR # use same replication factor for 3 topics
+          value: 3
+        - name: CONNECT_CONFIG_STORAGE_TOPIC # all topics are created before using Job
+          value: kafka-connect-config
+        - name: CONNECT_OFFSET_STORAGE_TOPIC
+          value: kafka-connect-offset
+        - name: CONNECT_STATUS_STORAGE_TOPIC
+          value: kafka-connect-status
+        - name: CONNECT_KEY_CONVERTER
+          value: org.apache.kafka.connect.json.JsonConverter
+        - name: CONNECT_VALUE_CONVERTER
+          value: org.apache.kafka.connect.json.JsonConverter
+        - name: CONNECT_INTERNAL_KEY_CONVERTER
+          value: org.apache.kafka.connect.json.JsonConverter
+        - name: CONNECT_INTERNAL_VALUE_CONVERTER
+          value: org.apache.kafka.connect.json.JsonConverter
+        - name: CONNECT_PLUGIN_PATH
+          value: /usr/share/java
+       ports:
+        - name: rest
+          containerPort: 8082
+        lifecycle:
+          preStop:
+            exec:
+             command: ["sh", "-ce", "kill -s TERM 1; while $(kill -0 1 2>/dev/null); do sleep 1; done"]
+        resources:
+          requests:
+            cpu: 2048m
+            memory: 2Gi
+        readinessProbe:
+          tcpSocket:
+            port: 8082
+          timeoutSeconds: 2
+          initialDelaySeconds: 5
+          periodSeconds: 20

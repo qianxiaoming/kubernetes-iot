@@ -1,0 +1,82 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-connect-topics
+  namespace: titangrm-iot
+data:
+  create-connect-topics.sh: |-
+    #!/bin/bash
+    if [ -z $KAFKA_APP_NAME ]; then
+        KAFKA_APP_NAME="kafka"
+    fi
+    if [ -z $KAFKA_BROKER_SERVICE ]; then
+        KAFKA_BROKER_SERVICE="kafka-broker"
+    fi
+    if [ -z $KAFKA_BROKER_PORT ]; then
+        KAFKA_BROKER_PORT="9092"
+    fi
+    if [ -z $KAFKA_BROKER_REPLICAS ]; then
+        KAFKA_BROKER_REPLICAS="3"
+    fi
+    if [ -z $ZOOKEEPER_SERVER ]; then
+        ZOOKEEPER_SERVER="zookeeper-server:2181/iot-default"
+    fi
+    if [ -z $NAMESPACE ]; then
+        NAMESPACE="titangrm-iot"
+    fi
+    all_ready=1
+    while :
+    do
+        all_ready=1
+        for pod in $(seq 0 $((KAFKA_BROKER_REPLICAS-1)))
+        do
+            nc -z $KAFKA_APP_NAME-$pod.$KAFKA_BROKER_SERVICE.$NAMESPACE $KAFKA_BROKER_PORT
+            if [ $? != 0 ]; then
+                all_ready=0
+                break
+            fi
+        done
+        if [ $all_ready = 1 ]; then
+            break
+        else
+            echo "Waiting for all pods of kafka application to be ready..."
+            sleep 5s
+        fi
+    done
+    echo "Create topics for kafka connect with replication factor $KAFKA_BROKER_REPLICAS..."
+    kafka-topics --create --topic kafka-connect-config --partitions 1 --replication-factor $KAFKA_BROKER_REPLICAS --if-not-exists --zookeeper $ZOOKEEPER_SERVER && \
+    kafka-topics --create --topic kafka-connect-offset --partitions $KAFKA_BROKER_REPLICAS --replication-factor $KAFKA_BROKER_REPLICAS --if-not-exists --zookeeper $ZOOKEEPER_SERVER && \
+    kafka-topics --create --topic kafka-connect-status --partitions $KAFKA_BROKER_REPLICAS --replication-factor $KAFKA_BROKER_REPLICAS --if-not-exists --zookeeper $ZOOKEEPER_SERVER
+    if [ $? != 0 ]; then
+        exit 1
+    fi
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: create-connect-topics
+  namespace: titangrm-iot
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      name: create-connect-topics
+    spec:
+      containers:
+      - name: kafka-broker
+        image: titangrm/kafka:2.1.0
+        env:
+        - name: KAFKA_BROKER_REPLICAS
+          value: "3"
+        - name: ZOOKEEPER_SERVER
+          value: "zookeeper-server:2181/iot-default"
+        command: ['/bin/bash', '/etc/kafka-connect/create-connect-topics.sh']
+        volumeMounts:
+        - name: configmap
+          mountPath: /etc/kafka-connect
+      volumes:
+      - name: configmap
+        configMap:
+          name: kafka-connect-topics
+      restartPolicy: Never

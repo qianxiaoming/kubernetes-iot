@@ -3,6 +3,8 @@ kind: StatefulSet
 metadata:
   name: kafka
   namespace: titangrm-iot
+  labels:
+    app: kafka
 spec:
   selector:
     matchLabels:
