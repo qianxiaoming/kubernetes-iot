@@ -6,7 +6,7 @@ metadata:
 spec:
   ports:
   - port: 1883
-    name: default
+    name: plain
   - port: 8883
     name: tls
   clusterIP: None
@@ -21,7 +21,7 @@ metadata:
 spec:
   ports:
   - port: 1883
-    name: default
+    name: plain
   - port: 8883
     name: tls
   selector:

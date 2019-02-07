@@ -1,3 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-connect-start
+  namespace: titangrm-iot
+data:
+  start-connect.sh: |-
+    #!/bin/bash
+    export CONNECT_REST_ADVERTISED_HOST_NAME=$(hostname -i)
+    echo "rest.advertised.host.name=$CONNECT_REST_ADVERTISED_HOST_NAME"
+    . /etc/confluent/docker/run
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-connect-server
+  namespace: titangrm-iot
+spec:
+  ports:
+  - port: 8082
+  selector:
+    app: kafka-connect
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -8,50 +31,52 @@ spec:
     matchLabels:
       app: kafka-connect
   replicas: 3
-  updateStrategy:
-    type: RollingUpdate
-  podManagementPolicy: Parallel
   template:
     metadata:
       labels:
         app: kafka-connect
     spec:
-      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: configmap
+        configMap:
+          name: kafka-connect-start
       containers:
       - name: kafka-connect
         image: titangrm/kafka-connect:2.1.0
         env:
         - name: CONNECT_BOOTSTRAP_SERVERS 
-          value: kafka-server # service name for kafka client
+          value: "kafka-server:9092" # service name for kafka client
         - name: CONNECT_REST_PORT
-          value: 8082
+          value: "8082"
         - name: CONNECT_GROUP_ID
-          value: kafka-connect-group
-        - name: CONNECT_TOPIC_REPLICATION_FACTOR # use same replication factor for 3 topics
-          value: 3
+          value: "kafka-connect-group"
         - name: CONNECT_CONFIG_STORAGE_TOPIC # all topics are created before using Job
-          value: kafka-connect-config
+          value: "kafka-connect-config"
         - name: CONNECT_OFFSET_STORAGE_TOPIC
-          value: kafka-connect-offset
+          value: "kafka-connect-offset"
         - name: CONNECT_STATUS_STORAGE_TOPIC
-          value: kafka-connect-status
+          value: "kafka-connect-status"
         - name: CONNECT_KEY_CONVERTER
-          value: org.apache.kafka.connect.json.JsonConverter
+          value: "org.apache.kafka.connect.json.JsonConverter"
         - name: CONNECT_VALUE_CONVERTER
-          value: org.apache.kafka.connect.json.JsonConverter
+          value: "org.apache.kafka.connect.json.JsonConverter"
         - name: CONNECT_INTERNAL_KEY_CONVERTER
-          value: org.apache.kafka.connect.json.JsonConverter
+          value: "org.apache.kafka.connect.json.JsonConverter"
         - name: CONNECT_INTERNAL_VALUE_CONVERTER
-          value: org.apache.kafka.connect.json.JsonConverter
+          value: "org.apache.kafka.connect.json.JsonConverter"
         - name: CONNECT_PLUGIN_PATH
-          value: /usr/share/java
-       ports:
+          value: "/usr/share/java"
+        command: ['/bin/bash', '/kafka-connect/start-connect.sh']
+        volumeMounts:
+        - name: configmap
+          mountPath: /kafka-connect
+        ports:
         - name: rest
           containerPort: 8082
         lifecycle:
           preStop:
             exec:
-             command: ["sh", "-ce", "kill -s TERM 1; while $(kill -0 1 2>/dev/null); do sleep 1; done"]
+              command: ["sh", "-ce", "kill -s TERM 1; while $(kill -0 1 2>/dev/null); do sleep 1; done"]
         resources:
           requests:
             cpu: 2048m

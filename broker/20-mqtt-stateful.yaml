@@ -20,12 +20,12 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
       - name: mqtt-broker
-        image: titangrm/iot-hub:1.0
+        image: titangrm/iot-broker:1.0.0
         env:
         - name: IOT_PROTOCOL
           value: MQTT
         ports:
-        - name: default
+        - name: plain
           containerPort: 1883
         - name: tls
           containerPort: 8883
