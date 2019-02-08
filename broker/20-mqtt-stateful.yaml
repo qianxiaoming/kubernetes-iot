@@ -18,6 +18,13 @@ spec:
         app: mqtt-broker
     spec:
       terminationGracePeriodSeconds: 30
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: grm.titan.com/gateway.iot
+                operator: Exists
       containers:
       - name: mqtt-broker
         image: titangrm/iot-broker:1.0.0

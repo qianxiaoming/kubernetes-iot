@@ -54,7 +54,13 @@ spec:
         volumeMounts:
         - name: data
           mountPath: /var/lib/kafka/data
-      volumes:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: grm.titan.com/service.iot
+                operator: Exists
   volumeClaimTemplates:
   - metadata:
       name: data

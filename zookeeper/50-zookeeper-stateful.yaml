@@ -69,6 +69,13 @@ spec:
           name: zookeeper-config
       - name: config
         emptyDir: {}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: grm.titan.com/service.iot
+                operator: Exists
   volumeClaimTemplates:
   - metadata:
       name: data
