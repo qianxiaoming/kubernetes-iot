@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: kafka-mqtt-connector
+  name: kafka-mqtt-connector-config
   namespace: titangrm-iot
 data:
   create-mqtt-connector.sh: |-
@@ -111,5 +111,5 @@ spec:
       volumes:
       - name: configmap
         configMap:
-          name: kafka-mqtt-connector
+          name: kafka-mqtt-connector-config
       restartPolicy: Never
