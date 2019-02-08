@@ -42,4 +42,4 @@ spec:
             port: 1883
           initialDelaySeconds: 3
           timeoutSeconds: 2
-          periodSeconds: 30
+          periodSeconds: 20

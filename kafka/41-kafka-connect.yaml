@@ -17,7 +17,7 @@ metadata:
   namespace: titangrm-iot
 spec:
   ports:
-  - port: 8082
+  - port: 8083
   selector:
     app: kafka-connect
 ---
@@ -47,7 +47,7 @@ spec:
         - name: CONNECT_BOOTSTRAP_SERVERS 
           value: "kafka-server:9092" # service name for kafka client
         - name: CONNECT_REST_PORT
-          value: "8082"
+          value: "8083"
         - name: CONNECT_GROUP_ID
           value: "kafka-connect-group"
         - name: CONNECT_CONFIG_STORAGE_TOPIC # all topics are created before using Job
@@ -72,7 +72,7 @@ spec:
           mountPath: /kafka-connect
         ports:
         - name: rest
-          containerPort: 8082
+          containerPort: 8083
         lifecycle:
           preStop:
             exec:
@@ -83,7 +83,7 @@ spec:
             memory: 2Gi
         readinessProbe:
           tcpSocket:
-            port: 8082
+            port: 8083
           timeoutSeconds: 2
           initialDelaySeconds: 5
           periodSeconds: 20

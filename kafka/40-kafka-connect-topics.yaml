@@ -45,8 +45,8 @@ data:
     done
     echo "Create topics for kafka connect with replication factor $KAFKA_BROKER_REPLICAS..."
     kafka-topics --create --topic kafka-connect-config --partitions 1 --replication-factor $KAFKA_BROKER_REPLICAS --if-not-exists --zookeeper $ZOOKEEPER_SERVER && \
-    kafka-topics --create --topic kafka-connect-offset --partitions $KAFKA_BROKER_REPLICAS --replication-factor $KAFKA_BROKER_REPLICAS --if-not-exists --zookeeper $ZOOKEEPER_SERVER && \
-    kafka-topics --create --topic kafka-connect-status --partitions $KAFKA_BROKER_REPLICAS --replication-factor $KAFKA_BROKER_REPLICAS --if-not-exists --zookeeper $ZOOKEEPER_SERVER
+    kafka-topics --create --topic kafka-connect-offset --partitions $((KAFKA_BROKER_REPLICAS*3)) --replication-factor $KAFKA_BROKER_REPLICAS --if-not-exists --zookeeper $ZOOKEEPER_SERVER && \
+    kafka-topics --create --topic kafka-connect-status --partitions $((KAFKA_BROKER_REPLICAS*3)) --replication-factor $KAFKA_BROKER_REPLICAS --if-not-exists --zookeeper $ZOOKEEPER_SERVER
     if [ $? != 0 ]; then
         exit 1
     fi
@@ -71,10 +71,10 @@ spec:
           value: "3"
         - name: ZOOKEEPER_SERVER
           value: "zookeeper-server:2181/iot-default"
-        command: ['/bin/bash', '/etc/kafka-connect/create-connect-topics.sh']
+        command: ['/bin/bash', '/kafka-connect/create-connect-topics.sh']
         volumeMounts:
         - name: configmap
-          mountPath: /etc/kafka-connect
+          mountPath: /kafka-connect
       volumes:
       - name: configmap
         configMap:

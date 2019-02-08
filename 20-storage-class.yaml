@@ -1,8 +1,6 @@
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
 metadata:
-  name: titangrm-iot-kafka
+  name: titangrm-iot-storage
 provisioner: kubernetes.io/no-provisioner
-reclaimPolicy: Retain
 volumeBindingMode: WaitForFirstConsumer
-

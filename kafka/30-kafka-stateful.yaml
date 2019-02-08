@@ -18,7 +18,6 @@ spec:
     metadata:
       labels:
         app: kafka
-      annotations:
     spec:
       terminationGracePeriodSeconds: 30
       containers:
@@ -61,7 +60,7 @@ spec:
       name: data
     spec:
       accessModes: [ "ReadWriteOnce" ]
-      storageClassName: titangrm-iot-kafka
+      storageClassName: titangrm-iot-storage
       resources:
         requests:
-          storage: 100Gi
+          storage: 300Gi
