@@ -1,0 +1,94 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: elasticsearch-connector-config
+  namespace: titangrm-iot
+data:
+  create-elasticsearch-connector.sh: |-
+    #!/bin/bash
+    if [ -z $ES_APP_NAME ]; then
+        ES_APP_NAME="elasticsearch"
+    fi
+    if [ -z $KAFKA_SOURCE_TOPIC ]; then
+        KAFKA_SOURCE_TOPIC="mqtt-data"
+    fi
+    if [ -z $ES_SINK_INDEX ]; then
+        ES_SINK_INDEX=$KAFKA_SOURCE_TOPICS
+    fi
+    if [ -z $ES_CLUSTER_SERVICE ]; then
+        ES_CLUSTER_SERVICE="elasticsearch-cluster"
+    fi
+    if [ -z $ES_SERVER_PORT ]; then
+        ES_SERVER_PORT="9200"
+    fi
+    if [ -z $ES_SERVER_REPLICAS ]; then
+        ES_SERVER_REPLICAS="3"
+    fi
+    if [ -z $ES_SERVER ]; then
+        ES_SERVER="elasticsearch-server"
+    fi
+    if [ -z $NAMESPACE ]; then
+        NAMESPACE="titangrm-iot"
+    fi
+    all_ready=1
+    while :
+    do
+        all_ready=1
+        for pod in $(seq 0 $((ES_SERVER_REPLICAS-1)))
+        do
+            curl -X GET $ES_APP_NAME-$pod.$ES_CLUSTER_SERVICE.$NAMESPACE:$ES_SERVER_PORT
+            if [ $? != 0 ]; then
+                all_ready=0
+                break
+            fi
+        done
+        if [ $all_ready = 1 ]; then
+            break
+        else
+            echo "Waiting for all pods of elasticsearch application to be ready..."
+            sleep 5s
+        fi
+    done
+    
+    echo "Create elasticsearch sink connector json file..."
+    echo "{\"name\": \"$ES_APP_NAME-$KAFKA_SOURCE_TOPIC-sink\", \"config\": { \"connector.class\":  \"io.confluent.connect.elasticsearch.ElasticsearchSinkConnector\", \"name\": \"$ES_APP_NAME-$KAFKA_SOURCE_TOPIC-sink\",  \"tasks.max\": $ES_SERVER_REPLICAS, \"topics\": \"$KAFKA_SOURCE_TOPIC\", \"connection.url\": \"http://$ES_SERVER.$NAMESPACE:$ES_SERVER_PORT\", \"type.name\": \"$KAFKA_SOURCE_TOPIC\", \"key.converter\": \"org.apache.kafka.connect.json.JsonConverter\", \"key.converter.schemas.enable\": false, \"value.converter\": \"org.apache.kafka.connect.json.JsonConverter\", \"value.converter.schemas.enable\": false, \"key.ignore\": true, \"schema.ignore\": true }}" > elasticsearch-sink.json
+    cat elasticsearch-sink.json
+    curl -d @elasticsearch-sink.json -H "Content-Type: application/json" -X POST http://kafka-connect-server.$NAMESPACE:8083/connectors
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: create-elasticsearch-connector
+  namespace: titangrm-iot
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      name: create-elasticsearch-connector
+    spec:
+      containers:
+      - name: kafka-broker
+        image: titangrm/kafka:2.1.0
+        env:
+        - name: ES_SERVER_REPLICAS
+          value: "3"
+        - name: ES_SERVER
+          value: "elasticsearch-server"
+        - name: ES_SERVER_PORT
+          value: "9200"
+        - name: ES_APP_NAME
+          value: "elasticsearch"
+        - name: KAFKA_SOURCE_TOPIC
+          value: "mqtt-data"
+        - name: ES_SINK_INDEX
+          value: "mqtt-data"
+        command: ['/bin/bash', '/kafka-connect/create-elasticsearch-connector.sh']
+        volumeMounts:
+        - name: configmap
+          mountPath: /kafka-connect
+      volumes:
+      - name: configmap
+        configMap:
+          name: elasticsearch-connector-config
+      restartPolicy: Never
