@@ -1,0 +1,17 @@
+namespace: titangrm-iot
+labelConfig:
+  service: grm.titan.com/service.iot
+  storage: grm.titan.com/storage.streaming
+  gateway: grm.titan.com/gateway.iot
+configVolume:
+  indices: [1,2,3]
+  size: 100Gi
+  path: /disk1/titangrm/vol100G
+streamVolume:
+  indices: [1,2,3]
+  size: 300Gi
+  path: /disk1/titangrm/vol300G
+analysisVolume:
+  indices: [1,2,3]
+  size: 500Gi
+  path: /disk1/titangrm/vol500G

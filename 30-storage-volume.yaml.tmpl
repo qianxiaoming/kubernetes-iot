@@ -1,0 +1,69 @@
+{{ range .ConfigVolume.Indices }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ $.Namespace }}-config-{{ . }}
+spec:
+  capacity:
+    storage: {{ $.ConfigVolume.Size }}
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: {{ $.Namespace }}-storage
+  local:
+    path: {{ $.ConfigVolume.Path }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: {{ $.LabelConfig.Storage }}
+          operator: Exists
+---
+{{ end }}
+{{ range .StreamVolume.Indices }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ $.Namespace }}-stream-{{ . }}
+spec:
+  capacity:
+    storage: {{ $.StreamVolume.Size }}
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: {{ $.Namespace }}-storage
+  local:
+    path: {{ $.StreamVolume.Path }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: {{ $.LabelConfig.Storage }}
+          operator: Exists
+---
+{{ end }}
+{{ range .AnalysisVolume.Indices }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ $.Namespace }}-analysis-{{ . }}
+spec:
+  capacity:
+    storage: {{ $.AnalysisVolume.Size }}
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: {{ $.Namespace }}-storage
+  local:
+    path: {{ $.AnalysisVolume.Path }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: {{ $.LabelConfig.Storage }}
+          operator: Exists
+---
+{{ end }}
