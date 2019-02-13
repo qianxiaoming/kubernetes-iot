@@ -48,12 +48,31 @@ type NodeLabels struct {
 	Gateway string
 }
 
+type RequestResources struct {
+	CPU string
+	Memory string
+	Storage string
+}
+
+type ZookeeperConfig struct {
+	AppName string `yaml:"appName"`
+	InitImage string `yaml:"initImage"`
+	Image string `yaml:"image"`
+	Indices []int `yaml:"indices"`
+	TickTime int `yaml:"tickTime"`
+	MaxClientCnxns int `yaml:"maxClientCnxns"`
+	InitLimit int `yaml:"initLimit"`
+	SyncLimit int `yaml:"syncLimit"`
+	Resources RequestResources `yaml:"resources"`
+}
+
 type DeploymentConfig struct {
 	Namespace string `yaml:"namespace"`
 	LabelConfig NodeLabels `yaml:"labelConfig"`
 	ConfigVolume VolumeInfo `yaml:"configVolume"`
 	StreamVolume VolumeInfo `yaml:"streamVolume"`
 	AnalysisVolume VolumeInfo `yaml:"analysisVolume"`
+	Zookeeper ZookeeperConfig `yaml:"zookeeper"`
 }
 
 func GenerateYAMLs(sourceDir string, targetDir string, valueFile string) bool {
@@ -93,6 +112,7 @@ func GenerateYAMLs(sourceDir string, targetDir string, valueFile string) bool {
 	if err != nil {
 		log.Fatalf("Parse value file failed: %v", err)
 	}
+	fmt.Printf("%v\n", config)
 
 	err = filepath.Walk(sourceDir, func(path string, f os.FileInfo, err error) error {
 		if f == nil { return err }

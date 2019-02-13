@@ -1,37 +1,37 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: zookeeper
-  namespace: titangrm-iot
+  name: {{ .Zookeeper.AppName }}
+  namespace: {{ .Namespace }}
 spec:
   selector:
     matchLabels:
-      app: zookeeper
-  serviceName: "zookeeper-ensemble"
-  replicas: 3
+      app: {{ .Zookeeper.AppName }}
+  serviceName: {{ .Zookeeper.AppName }}-ensemble
+  replicas: {{ .Zookeeper.Indices | len }}
   updateStrategy:
     type: RollingUpdate
   podManagementPolicy: Parallel
   template:
     metadata:
       labels:
-        app: zookeeper
+        app: {{ .Zookeeper.AppName }}
     spec:
       terminationGracePeriodSeconds: 10
       initContainers:
       - name: zookeeper-init
-        image: titangrm/zookeeper-init:1.0
-        command: ['/bin/bash', '/etc/zookeeper-configmap/init-zookeeper.sh']
+        image: {{ .Zookeeper.InitImage }}
+        command: ['/bin/bash', '/etc/zookeeper-config/init-zookeeper.sh']
         volumeMounts:
         - name: configmap
-          mountPath: /etc/zookeeper-configmap
+          mountPath: /etc/zookeeper-config
         - name: config
           mountPath: /conf
         - name: data
           mountPath: /zookeeper
       containers:
       - name: zookeeper
-        image: titangrm/zookeeper:3.4.13
+        image: {{ .Zookeeper.Image }}
         env:
         - name: ZOO_LOG4J_OPTS
           value: -Dlog4j.configuration=file:/conf/log4j.properties
@@ -48,8 +48,8 @@ spec:
           name: election
         resources:
           requests:
-            cpu: 500m
-            memory: 2048Mi
+            cpu: {{ .Zookeeper.Resources.CPU }}
+            memory: {{ .Zookeeper.Resources.Memory }}
         readinessProbe:
           exec:
             command:
@@ -74,14 +74,14 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: grm.titan.com/service.iot
+              - key: {{ .LabelConfig.Service }}
                 operator: Exists
   volumeClaimTemplates:
   - metadata:
       name: data
     spec:
       accessModes: [ "ReadWriteOnce" ]
-      storageClassName: titangrm-iot-storage
+      storageClassName: {{ .Namespace }}-storage
       resources:
         requests:
-          storage: 100Gi
+          storage: {{ .Zookeeper.Resources.Storage }}

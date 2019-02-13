@@ -1,7 +1,7 @@
 kind: ConfigMap
 metadata:
-  name: zookeeper-config
-  namespace: titangrm-iot
+  name: {{ .Zookeeper.AppName }}-config
+  namespace: {{ .Namespace }}
 apiVersion: v1
 data:
   init-zookeeper.sh: |-
@@ -14,27 +14,23 @@ data:
     [ -z "$ID_OFFSET" ] && ID_OFFSET=1
     export ZOOKEEPER_SERVER_ID=$((${HOSTNAME##*-} + $ID_OFFSET))
     echo "${ZOOKEEPER_SERVER_ID:-1}" | tee /zookeeper/data/myid
-    cp -Lur /etc/zookeeper-configmap/* /conf
+    cp -Lur /etc/zookeeper-config/* /conf
     sed -i "s/server\.$ZOOKEEPER_SERVER_ID\=[a-z0-9.-]*/server.$ZOOKEEPER_SERVER_ID=0.0.0.0/" /conf/zoo.cfg
-
   zoo.cfg: |-
-    tickTime=2000
+    tickTime={{ .Zookeeper.TickTime }}
     dataDir=/zookeeper/data
     dataLogDir=/zookeeper/log
     clientPort=2181
-    maxClientCnxns=8
-    initLimit=5
-    syncLimit=2
-    server.1=zookeeper-0.zookeeper-ensemble:2888:3888:participant
-    server.2=zookeeper-1.zookeeper-ensemble:2888:3888:participant
-    server.3=zookeeper-2.zookeeper-ensemble:2888:3888:participant
-
+    maxClientCnxns={{ .Zookeeper.MaxClientCnxns }}
+    initLimit={{ .Zookeeper.InitLimit }}
+    syncLimit={{ .Zookeeper.SyncLimit }}
+    {{ range $i, $v := .Zookeeper.Indices }}
+    server.{{ $v }}={{ $.Zookeeper.AppName }}-{{ $i }}.{{ $.Zookeeper.AppName }}-ensemble:2888:3888:participant
+    {{ end }}
   log4j.properties: |-
     log4j.rootLogger=INFO, stdout
     log4j.appender.stdout=org.apache.log4j.ConsoleAppender
     log4j.appender.stdout.layout=org.apache.log4j.PatternLayout
     log4j.appender.stdout.layout.ConversionPattern=[%d] %p %m (%c)%n
-
-    # Suppress connection log messages, three lines per livenessProbe execution
     log4j.logger.org.apache.zookeeper.server.NIOServerCnxnFactory=WARN
     log4j.logger.org.apache.zookeeper.server.NIOServerCnxn=WARN

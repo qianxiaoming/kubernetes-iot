@@ -1,8 +1,8 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: zookeeper-ensemble
-  namespace: titangrm-iot
+  name: {{ .Zookeeper.AppName }}-ensemble
+  namespace: {{ .Namespace }}
 spec:
   ports:
   - port: 2888
@@ -11,16 +11,16 @@ spec:
     name: election
   clusterIP: None
   selector:
-    app: zookeeper
+    app: {{ .Zookeeper.AppName }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: zookeeper-server
-  namespace: titangrm-iot
+  name: {{ .Zookeeper.AppName }}-server
+  namespace: {{ .Namespace }}
 spec:
   ports:
   - port: 2181
     name: client
   selector:
-    app: zookeeper
+    app: {{ .Zookeeper.AppName }}

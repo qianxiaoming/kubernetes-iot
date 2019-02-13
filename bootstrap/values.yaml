@@ -15,3 +15,16 @@ analysisVolume:
   indices: [1,2,3]
   size: 500Gi
   path: /disk1/titangrm/vol500G
+zookeeper:
+  appName: zookeeper
+  initImage: titangrm/zookeeper-init:1.0
+  image: titangrm/zookeeper:3.4.13
+  indices: [1,2,3]
+  tickTime: 2000
+  maxClientCnxns: 20
+  initLimit: 10
+  syncLimit: 2
+  resources:
+    cpu: 800m
+    memory: 2Gi
+    storage: 100Gi
