@@ -102,7 +102,7 @@ func GenerateYAMLs(sourceDir string, targetDir string, valueFile string) bool {
 		tmplFile, yamlFile := path, targetDir + string(os.PathSeparator) + path[len(sourceDir)+1:]
 		yamlFile = yamlFile[0:len(yamlFile)-5]
 		fmt.Printf("Generating %s...\n", yamlFile)
-
+		os.MkdirAll(filepath.Dir(yamlFile), os.ModePerm)
 		file, err := os.Create(yamlFile)
 		if err != nil {
 			log.Fatalf("Cannot create output yaml file %s: %v", yamlFile, err)
@@ -110,9 +110,8 @@ func GenerateYAMLs(sourceDir string, targetDir string, valueFile string) bool {
 		defer file.Close()
 
 		t := template.Must(template.ParseFiles(tmplFile))
-		t.Execute(file, config)
-		file.Close()
-		return nil
+		err = t.Execute(file, config)
+		return err
 	})
 	return err == nil
 }
