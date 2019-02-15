@@ -80,6 +80,21 @@ type KafkaConfig struct {
 	Connect ConnectConfig `yaml:"connect"`
 }
 
+type ConnectorConfig struct {
+	Source string `yaml:"source"`
+	Sink string `yaml:"sink"`
+}
+
+type ElasticsearchConfig struct {
+	AppName string `yaml:"appName"`
+	InitImage string `yaml:"initImage"`
+	Image string `yaml:"image"`
+	Replicas int `yaml:"replicas"`
+	JavaOpts string `yaml:"javaOpts"`
+	Resources RequestResources `yaml:"resources"`
+	Connector ConnectorConfig `yaml:"connector"`
+}
+
 type DeploymentConfig struct {
 	Namespace string `yaml:"namespace"`
 	LabelConfig NodeLabels `yaml:"labelConfig"`
@@ -88,6 +103,7 @@ type DeploymentConfig struct {
 	AnalysisVolume VolumeInfo `yaml:"analysisVolume"`
 	Zookeeper ZookeeperConfig `yaml:"zookeeper"`
 	Kafka KafkaConfig `yaml:"kafka"`
+	Elasticsearch ElasticsearchConfig `yaml:"elasticsearch"`
 }
 
 func int2slice(v int) []int {

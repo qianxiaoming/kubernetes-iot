@@ -1,15 +1,15 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: elasticsearch-config
-  namespace: titangrm-iot
+  name: {{ .Elasticsearch.AppName }}-config
+  namespace: {{ .Namespace }}
 data:
   elasticsearch.yml: |-
-    cluster.name: elasticsearch
+    cluster.name: {{ .Elasticsearch.AppName }}
     network.host: "0.0.0.0"
     bootstrap.memory_lock: false
-    discovery.zen.ping.unicast.hosts: elasticsearch-cluster
+    discovery.zen.ping.unicast.hosts: {{ .Elasticsearch.AppName }}-cluster
     discovery.zen.minimum_master_nodes: 1
     xpack.security.enabled: false
     xpack.monitoring.enabled: false
-  ES_JAVA_OPTS: -Xms4g -Xmx4g
+  ES_JAVA_OPTS: {{ .Elasticsearch.JavaOpts }}

@@ -42,3 +42,16 @@ kafka:
     resources:
       cpu: 2048m
       memory: 2Gi
+elasticsearch:
+  appName: elasticsearch
+  replicas: 3
+  javaOpts: -Xms4g -Xmx4g
+  initImage: alpine:3.8
+  image: titangrm/elasticsearch:6.6.0
+  resources:
+    cpu: 4096m
+    memory: 4Gi
+    storage: 500Gi
+  connector:
+    source: mqtt-data
+    sink: mqtt-data
