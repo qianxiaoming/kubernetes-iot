@@ -1,0 +1,115 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Broker.AppName }}-connector-config
+  namespace: {{ .Namespace }}
+data:
+  create-broker-connector.sh: |-
+    #!/bin/bash
+    if [ -z $BROKER_APP_NAME ]; then
+        BROKER_APP_NAME="{{ .Broker.AppName }}"
+    fi
+    if [ -z $BROKER_SOURCE_TOPICS ]; then
+        BROKER_SOURCE_TOPICS="{{ .Broker.Connector.Source }}"
+    fi
+    if [ -z $BROKER_KAFKA_TOPIC ]; then
+        BROKER_KAFKA_TOPIC="{{ .Broker.Connector.Sink }}"
+    fi
+    if [ -z $BROKER_SERVICE ]; then
+        BROKER_SERVICE="{{ .Broker.AppName }}-cluster"
+    fi
+    if [ -z $BROKER_PLAIN_PORT ]; then
+        BROKER_PLAIN_PORT="{{ .Broker.PlainPort }}"
+    fi
+    if [ -z $BROKER_REPLICAS ]; then
+        BROKER_REPLICAS="{{ .Broker.Replicas }}"
+    fi
+    if [ -z $KAFKA_SERVER ]; then
+        KAFKA_SERVER="{{ .Kafka.AppName }}-server"
+    fi
+    if [ -z $KAFKA_SERVER_PORT ]; then
+        KAFKA_SERVER_PORT="9092"
+    fi
+    if [ -z $KAFKA_BROKER_REPLICAS ]; then
+        KAFKA_BROKER_REPLICAS="{{ .Kafka.Replicas }}"
+    fi
+    if [ -z $ZOOKEEPER_SERVER ]; then
+        ZOOKEEPER_SERVER="{{ .Zookeeper.AppName }}-server:2181/{{ .Kafka.Zkchroot }}"
+    fi
+    if [ -z $NAMESPACE ]; then
+        NAMESPACE="{{ .Namespace }}"
+    fi
+    all_ready=1
+    while :
+    do
+        all_ready=1
+        for pod in $(seq 0 $((BROKER_REPLICAS-1)))
+        do
+            nc -z $BROKER_APP_NAME-$pod.$BROKER_SERVICE.$NAMESPACE $BROKER_PLAIN_PORT
+            if [ $? != 0 ]; then
+                all_ready=0
+                break
+            fi
+        done
+        if [ $all_ready = 1 ]; then
+            break
+        else
+            echo "Waiting for all pods of broker application to be ready..."
+            sleep 5s
+        fi
+    done
+    echo "Create broker topic in kafka with replication factor $KAFKA_BROKER_REPLICAS..."
+    kafka-topics --create --topic $BROKER_KAFKA_TOPIC --partitions $((KAFKA_BROKER_REPLICAS*5)) --replication-factor $KAFKA_BROKER_REPLICAS --if-not-exists --zookeeper $ZOOKEEPER_SERVER
+    if [ $? != 0 ]; then
+        exit 1
+    fi
+    
+    echo "Create source connector json file..."
+    for pod in $(seq 0 $((BROKER_REPLICAS-1)))
+    do
+        echo "{\"name\":\"$BROKER_APP_NAME-source-$pod\",\"config\":{\"connector.class\":\"io.confluent.connect.mqtt.MqttSourceConnector\",\"tasks.max\":$KAFKA_BROKER_REPLICAS,\"mqtt.server.uri\": \"tcp://$BROKER_APP_NAME-$pod.$BROKER_SERVICE.$NAMESPACE:$BROKER_PLAIN_PORT\",\"mqtt.topics\": \"$BROKER_SOURCE_TOPICS\",\"kafka.topic\": \"$KAFKA_SINK_TOPIC\",\"value.converter\": \"org.apache.kafka.connect.converters.ByteArrayConverter\",\"confluent.topic.bootstrap.servers\": \"$KAFKA_SERVER.$NAMESPACE:$KAFKA_SERVER_PORT\",\"confluent.topic.replication.factor\":$KAFKA_BROKER_REPLICAS}}" > broker-source.json
+        cat broker-source.json
+        curl -d @broker-source.json -H "Content-Type: application/json" -X POST http://{{ .Kafka.AppName }}-connect-server.$NAMESPACE:8083/connectors
+    done
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: create-{{ .Broker.AppName }}-connector
+  namespace: {{ .Namespace }}
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      name: create-{{ .Broker.AppName }}-connector
+    spec:
+      containers:
+      - name: kafka-broker
+        image: {{ .Kafka.Image }}
+        env:
+        - name: BROKER_REPLICAS
+          value: {{ .Broker.Replicas }}
+        - name: KAFKA_SERVER
+          value: {{ .Kafka.AppName }}-server
+        - name: KAFKA_SERVER_PORT
+          value: "9092"
+        - name: KAFKA_BROKER_REPLICAS
+          value: "{{ .Kafka.Replicas }}"
+        - name: BROKER_APP_NAME
+          value: {{ .Broker.AppName }}
+        - name: KAFKA_SINK_TOPIC
+          value: {{ .Broker.Connector.Sink }}
+        - name: BROKER_SOURCE_TOPICS
+          value: {{ .Broker.Connector.Source }}
+        - name: ZOOKEEPER_SERVER
+          value: {{ .Zookeeper.AppName }}-server:2181/{{ .Kafka.Zkchroot }}
+        command: ['/bin/bash', '/kafka-connect/create-broker-connector.sh']
+        volumeMounts:
+        - name: configmap
+          mountPath: /kafka-connect
+      volumes:
+      - name: configmap
+        configMap:
+          name: {{ .Broker.AppName }}-connector-config
+      restartPolicy: Never

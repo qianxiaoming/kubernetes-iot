@@ -55,3 +55,16 @@ elasticsearch:
   connector:
     source: mqtt-data
     sink: mqtt-data
+broker:
+  appName: mqtt-broker
+  replicas: 1
+  image: titangrm/iot-broker:1.0.0
+  protocol: MQTT
+  plainPort: 1883
+  tlsPort: 8883
+  resources:
+    cpu: 2048m
+    memory: 2Gi
+  connector:
+    source: mqtt-data
+    sink: mqtt-data

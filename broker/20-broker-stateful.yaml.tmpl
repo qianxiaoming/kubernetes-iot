@@ -1,52 +1,52 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: mqtt
-  namespace: titangrm-iot
+  name: {{ .Broker.AppName }}
+  namespace: {{ .Namespace }}
 spec:
   selector:
     matchLabels:
-      app: mqtt-broker
-  serviceName: "mqtt-broker"
-  replicas: 3
+      app: {{ .Broker.AppName }}
+  serviceName: {{ .Broker.AppName }}-cluster
+  replicas: {{ .Broker.Replicas }}
   updateStrategy:
     type: RollingUpdate
   podManagementPolicy: Parallel
   template:
     metadata:
       labels:
-        app: mqtt-broker
+        app: {{ .Broker.AppName }}
     spec:
-      terminationGracePeriodSeconds: 30
+      terminationGracePeriodSeconds: 10
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: grm.titan.com/gateway.iot
+              - key: {{ .LabelConfig.Gateway }}
                 operator: Exists
       containers:
-      - name: mqtt-broker
-        image: titangrm/iot-broker:1.0.0
+      - name: iot-broker
+        image: {{ .Broker.Image }}
         env:
         - name: IOT_PROTOCOL
-          value: MQTT
+          value: {{ .Broker.Protocol }}
         ports:
         - name: plain
-          containerPort: 1883
+          containerPort: {{ .Broker.PlainPort }}
         - name: tls
-          containerPort: 8883
+          containerPort: {{ .Broker.TlsPort }}
         lifecycle:
           preStop:
             exec:
              command: ["sh", "-ce", "kill -s TERM 1; while $(kill -0 1 2>/dev/null); do sleep 1; done"]
         resources:
           requests:
-            cpu: 2048m
-            memory: 2Gi
+            cpu: {{ .Broker.Resources.CPU }}
+            memory: {{ .Broker.Resources.Memory }}
         readinessProbe:
           tcpSocket:
-            port: 1883
+            port: {{ .Broker.PlainPort }}
           initialDelaySeconds: 3
           timeoutSeconds: 2
           periodSeconds: 20

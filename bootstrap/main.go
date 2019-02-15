@@ -95,6 +95,17 @@ type ElasticsearchConfig struct {
 	Connector ConnectorConfig `yaml:"connector"`
 }
 
+type BrokerConfig struct {
+	AppName string `yaml:"appName"`
+	Image string `yaml:"image"`
+	Replicas int `yaml:"replicas"`
+	Protocol string `yaml:"protocol"`
+	PlainPort int `yaml:"plainPort"`
+	TlsPort int `yaml:"tlsPort"`
+	Resources RequestResources `yaml:"resources"`
+	Connector ConnectorConfig `yaml:"connector"`
+}
+
 type DeploymentConfig struct {
 	Namespace string `yaml:"namespace"`
 	LabelConfig NodeLabels `yaml:"labelConfig"`
@@ -104,6 +115,7 @@ type DeploymentConfig struct {
 	Zookeeper ZookeeperConfig `yaml:"zookeeper"`
 	Kafka KafkaConfig `yaml:"kafka"`
 	Elasticsearch ElasticsearchConfig `yaml:"elasticsearch"`
+	Broker BrokerConfig `yaml:"broker"`
 }
 
 func int2slice(v int) []int {

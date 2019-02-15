@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Broker.AppName }}-cluster
+  namespace: {{ .Namespace }}
+spec:
+  ports:
+  - port: {{ .Broker.PlainPort }}
+    name: plain
+  - port: {{ .Broker.TlsPort }}
+    name: tls
+  clusterIP: None
+  selector:
+    app: {{ .Broker.AppName }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Broker.AppName }}-server
+  namespace: {{ .Namespace }}
+spec:
+  ports:
+  - port: {{ .Broker.PlainPort }}
+    name: plain
+  - port: {{ .Broker.TlsPort }}
+    name: tls
+  selector:
+    app: {{ .Broker.AppName }}
+    
