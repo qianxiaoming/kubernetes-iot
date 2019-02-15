@@ -1,23 +1,23 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: create-connect-topics
-  namespace: titangrm-iot
+  name: create-{{ .Kafka.AppName }}-connect-topics
+  namespace: {{ .Namespace }}
 spec:
   parallelism: 1
   completions: 1
   template:
     metadata:
-      name: create-connect-topics
+      name: create-{{ .Kafka.AppName }}-connect-topics
     spec:
       containers:
       - name: kafka-broker
-        image: titangrm/kafka:2.1.0
+        image: {{ .Kafka.Connect.Image }}
         env:
         - name: KAFKA_BROKER_REPLICAS
-          value: "3"
+          value: "{{ .Kafka.Replicas }}"
         - name: ZOOKEEPER_SERVER
-          value: "zookeeper-server:2181/iot-default"
+          value: "{{ .Zookeeper.AppName }}-server:2181/{{ .Kafka.Zkchroot }}"
         command: ['/bin/bash', '/kafka-connect/create-connect-topics.sh']
         volumeMounts:
         - name: configmap
@@ -25,5 +25,5 @@ spec:
       volumes:
       - name: configmap
         configMap:
-          name: kafka-connect-config
+          name: {{ .Kafka.AppName }}-connect-config
       restartPolicy: Never

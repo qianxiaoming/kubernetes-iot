@@ -8,7 +8,7 @@ spec:
     matchLabels:
       app: {{ .Zookeeper.AppName }}
   serviceName: {{ .Zookeeper.AppName }}-ensemble
-  replicas: {{ .Zookeeper.Indices | len }}
+  replicas: {{ .Zookeeper.Replicas }}
   updateStrategy:
     type: RollingUpdate
   podManagementPolicy: Parallel

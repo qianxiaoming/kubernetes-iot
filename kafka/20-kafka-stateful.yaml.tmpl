@@ -1,39 +1,39 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: kafka
-  namespace: titangrm-iot
-  labels:
-    app: kafka
+  name: {{ .Kafka.AppName }}
+  namespace: {{ .Namespace }}
 spec:
   selector:
     matchLabels:
-      app: kafka
-  serviceName: "kafka-broker"
-  replicas: 3
+      app: {{ .Kafka.AppName }}
+  serviceName: {{ .Kafka.AppName }}-broker
+  replicas: {{ .Kafka.Replicas }}
   updateStrategy:
     type: RollingUpdate
   podManagementPolicy: Parallel
   template:
     metadata:
       labels:
-        app: kafka
+        app: {{ .Kafka.AppName }}
     spec:
       terminationGracePeriodSeconds: 30
       containers:
       - name: kafka-broker
-        image: titangrm/kafka:2.1.0
+        image: {{ .Kafka.Image }}
         env:
         # Belows are used to make zookeeper.connect configuration
         - name: ZK_PREFIX 
-          value: zookeeper-
+          value: {{ .Zookeeper.AppName }}
         - name: ZK_CLUSTER
-          value: zookeeper-ensemble
+          value: {{ .Zookeeper.AppName }}-ensemble
+        - name: ZK_CHROOT
+          value: {{ .Kafka.Zkchroot }}
         - name: KAFKA_DELETE_TOPIC_ENABLE
           value: "true"
-        # Below is required when replicas = 1
-        #- name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
-        #  value: 1
+        {{ if eq 1 .Kafka.Replicas }}# Below is required when replicas = 1
+        - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+          value: 1{{ end }}
         ports:
         - name: client
           containerPort: 9092
@@ -43,8 +43,8 @@ spec:
              command: ["sh", "-ce", "kill -s TERM 1; while $(kill -0 1 2>/dev/null); do sleep 1; done"]
         resources:
           requests:
-            cpu: 2048m
-            memory: 2Gi
+            cpu: {{ .Kafka.Resources.CPU }}
+            memory: {{ .Kafka.Resources.Memory }}
         readinessProbe:
           tcpSocket:
             port: 9092
@@ -59,14 +59,14 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: grm.titan.com/service.iot
+              - key: {{ .LabelConfig.Service }}
                 operator: Exists
   volumeClaimTemplates:
   - metadata:
       name: data
     spec:
       accessModes: [ "ReadWriteOnce" ]
-      storageClassName: titangrm-iot-storage
+      storageClassName: {{ .Namespace }}-storage
       resources:
         requests:
-          storage: 300Gi
+          storage: {{ .Kafka.Resources.Storage }}

@@ -1,4 +1,4 @@
-{{ range .ConfigVolume.Indices }}
+{{ range int2slice .ConfigVolume.Replicas }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -21,7 +21,7 @@ spec:
           operator: Exists
 ---
 {{ end }}
-{{ range .StreamVolume.Indices }}
+{{ range int2slice .StreamVolume.Replicas }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -44,7 +44,7 @@ spec:
           operator: Exists
 ---
 {{ end }}
-{{ range .AnalysisVolume.Indices }}
+{{ range int2slice .AnalysisVolume.Replicas }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:

@@ -37,7 +37,7 @@ func main() {
 }
 
 type VolumeInfo struct {
-	Indices []int
+	Replicas int
 	Size string
 	Path string
 }
@@ -58,12 +58,26 @@ type ZookeeperConfig struct {
 	AppName string `yaml:"appName"`
 	InitImage string `yaml:"initImage"`
 	Image string `yaml:"image"`
-	Indices []int `yaml:"indices"`
+	Replicas int `yaml:"replicas"`
 	TickTime int `yaml:"tickTime"`
 	MaxClientCnxns int `yaml:"maxClientCnxns"`
 	InitLimit int `yaml:"initLimit"`
 	SyncLimit int `yaml:"syncLimit"`
 	Resources RequestResources `yaml:"resources"`
+}
+
+type ConnectConfig struct {
+	Image string `yaml:"image"`
+	Resources RequestResources `yaml:"resources"`
+}
+
+type KafkaConfig struct {
+	AppName string `yaml:"appName"`
+	Image string `yaml:"image"`
+	Replicas int `yaml:"replicas"`
+	Zkchroot string `yaml:"zkchroot"`
+	Resources RequestResources `yaml:"resources"`
+	Connect ConnectConfig `yaml:"connect"`
 }
 
 type DeploymentConfig struct {
@@ -73,6 +87,15 @@ type DeploymentConfig struct {
 	StreamVolume VolumeInfo `yaml:"streamVolume"`
 	AnalysisVolume VolumeInfo `yaml:"analysisVolume"`
 	Zookeeper ZookeeperConfig `yaml:"zookeeper"`
+	Kafka KafkaConfig `yaml:"kafka"`
+}
+
+func int2slice(v int) []int {
+	slice := make([]int, v)
+	for i := 1; i <= v; i++ {
+		slice[i-1] = i
+	}
+	return slice
 }
 
 func GenerateYAMLs(sourceDir string, targetDir string, valueFile string) bool {
@@ -129,9 +152,13 @@ func GenerateYAMLs(sourceDir string, targetDir string, valueFile string) bool {
 		}
 		defer file.Close()
 
-		t := template.Must(template.ParseFiles(tmplFile))
-		err = t.Execute(file, config)
-		return err
+		t := template.New(filepath.Base(tmplFile))
+		t.Funcs(template.FuncMap{"int2slice": int2slice})
+		t, err = t.ParseFiles(tmplFile)
+		if err != nil {
+			return err
+		}
+		return t.Execute(file, config)
 	})
 	return err == nil
 }

@@ -1,28 +1,28 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: kafka-connect-config
-  namespace: titangrm-iot
+  name: {{ .Kafka.AppName }}-connect-config
+  namespace: {{ .Namespace }}
 data:
   create-connect-topics.sh: |-
     #!/bin/bash
     if [ -z $KAFKA_APP_NAME ]; then
-        KAFKA_APP_NAME="kafka"
+        KAFKA_APP_NAME="{{ .Kafka.AppName }}"
     fi
     if [ -z $KAFKA_BROKER_SERVICE ]; then
-        KAFKA_BROKER_SERVICE="kafka-broker"
+        KAFKA_BROKER_SERVICE="{{ .Kafka.AppName }}-broker"
     fi
     if [ -z $KAFKA_BROKER_PORT ]; then
         KAFKA_BROKER_PORT="9092"
     fi
     if [ -z $KAFKA_BROKER_REPLICAS ]; then
-        KAFKA_BROKER_REPLICAS="3"
+        KAFKA_BROKER_REPLICAS="{{ .Kafka.Replicas }}"
     fi
     if [ -z $ZOOKEEPER_SERVER ]; then
-        ZOOKEEPER_SERVER="zookeeper-server:2181/iot-default"
+        ZOOKEEPER_SERVER="{{ .Zookeeper.AppName }}-server:2181/{{ .Kafka.Zkchroot }}"
     fi
     if [ -z $NAMESPACE ]; then
-        NAMESPACE="titangrm-iot"
+        NAMESPACE="{{ .Namespace }}"
     fi
     all_ready=1
     while :

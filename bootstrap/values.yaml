@@ -4,22 +4,22 @@ labelConfig:
   storage: grm.titan.com/storage.streaming
   gateway: grm.titan.com/gateway.iot
 configVolume:
-  indices: [1,2,3]
+  replicas: 3
   size: 100Gi
   path: /disk1/titangrm/vol100G
 streamVolume:
-  indices: [1,2,3]
+  replicas: 3
   size: 300Gi
   path: /disk1/titangrm/vol300G
 analysisVolume:
-  indices: [1,2,3]
+  replicas: 3
   size: 500Gi
   path: /disk1/titangrm/vol500G
 zookeeper:
   appName: zookeeper
   initImage: titangrm/zookeeper-init:1.0
   image: titangrm/zookeeper:3.4.13
-  indices: [1,2,3]
+  replicas: 3
   tickTime: 2000
   maxClientCnxns: 20
   initLimit: 10
@@ -28,3 +28,17 @@ zookeeper:
     cpu: 800m
     memory: 2Gi
     storage: 100Gi
+kafka:
+  appName: kafka
+  image: titangrm/kafka:2.1.0
+  replicas: 3
+  zkchroot: iot-default
+  resources:
+    cpu: 2048m
+    memory: 2Gi
+    storage: 300Gi
+  connect:
+    image: titangrm/kafka:2.1.0
+    resources:
+      cpu: 2048m
+      memory: 2Gi

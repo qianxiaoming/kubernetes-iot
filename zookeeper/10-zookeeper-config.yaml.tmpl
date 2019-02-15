@@ -24,9 +24,8 @@ data:
     maxClientCnxns={{ .Zookeeper.MaxClientCnxns }}
     initLimit={{ .Zookeeper.InitLimit }}
     syncLimit={{ .Zookeeper.SyncLimit }}
-    {{ range $i, $v := .Zookeeper.Indices }}
-    server.{{ $v }}={{ $.Zookeeper.AppName }}-{{ $i }}.{{ $.Zookeeper.AppName }}-ensemble:2888:3888:participant
-    {{ end }}
+	{{ range $i, $v := int2slice .Zookeeper.Replicas }}server.{{ $v }}={{ $.Zookeeper.AppName }}-{{ $i }}.{{ $.Zookeeper.AppName }}-ensemble:2888:3888:participant
+	{{ end }}
   log4j.properties: |-
     log4j.rootLogger=INFO, stdout
     log4j.appender.stdout=org.apache.log4j.ConsoleAppender

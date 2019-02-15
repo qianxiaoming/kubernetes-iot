@@ -1,46 +1,46 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: kafka-connect-server
-  namespace: titangrm-iot
+  name: {{ .Kafka.AppName }}-connect-server
+  namespace: {{ .Namespace }}
 spec:
   ports:
   - port: 8083
   selector:
-    app: kafka-connect
+    app: {{ .Kafka.AppName }}-connect
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: kafka-connect
-  namespace: titangrm-iot
+  name: {{ .Kafka.AppName }}-connect
+  namespace: {{ .Namespace }}
 spec:
   selector:
     matchLabels:
-      app: kafka-connect
-  replicas: 3
+      app: {{ .Kafka.AppName }}-connect
+  replicas: {{ .Kafka.Replicas }}
   template:
     metadata:
       labels:
-        app: kafka-connect
+        app: {{ .Kafka.AppName }}-connect
     spec:
       volumes:
       - name: configmap
         configMap:
-          name: kafka-connect-config
+          name: {{ .Kafka.AppName }}-connect-config
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: grm.titan.com/service.iot
+              - key: {{ .LabelConfig.Service }}
                 operator: Exists
       containers:
       - name: kafka-connect
-        image: titangrm/kafka-connect:2.1.0
+        image: {{ .Kafka.Connect.Image }}
         env:
-        - name: CONNECT_BOOTSTRAP_SERVERS 
-          value: "kafka-server:9092" # service name for kafka client
+        - name: CONNECT_BOOTSTRAP_SERVERS
+          value: "{{ .Kafka.AppName }}-server:9092" # service name for kafka client
         - name: CONNECT_REST_PORT
           value: "8083"
         - name: CONNECT_GROUP_ID
@@ -74,8 +74,8 @@ spec:
               command: ["sh", "-ce", "kill -s TERM 1; while $(kill -0 1 2>/dev/null); do sleep 1; done"]
         resources:
           requests:
-            cpu: 2048m
-            memory: 2Gi
+            cpu: {{ .Kafka.Connect.Resources.CPU }}
+            memory: {{ .Kafka.Connect.Resources.Memory }}
         readinessProbe:
           tcpSocket:
             port: 8083

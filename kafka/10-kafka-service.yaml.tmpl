@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Kafka.AppName }}-broker
+  namespace: {{ .Namespace }}
+spec:
+  ports:
+  - port: 9092
+  clusterIP: None
+  selector:
+    app: {{ .Kafka.AppName }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Kafka.AppName }}-server
+  namespace: {{ .Namespace }}
+spec:
+  ports:
+  - port: 9092
+  selector:
+    app: {{ .Kafka.AppName }}
+
