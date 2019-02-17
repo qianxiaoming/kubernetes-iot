@@ -4,15 +4,15 @@ labelConfig:
   storage: grm.titan.com/storage.streaming
   gateway: grm.titan.com/gateway.iot
 configVolume:
-  replicas: 3
+  nodes: ["k8sn1", "k8sn2", "k8sn3"]
   size: 100Gi
   path: /disk1/titangrm/vol100G
 streamVolume:
-  replicas: 3
+  nodes: ["k8sn1", "k8sn2", "k8sn3"]
   size: 300Gi
   path: /disk1/titangrm/vol300G
-analysisVolume:
-  replicas: 3
+dataVolume:
+  nodes: ["k8sn1", "k8sn4", "k8sn5"]
   size: 500Gi
   path: /disk1/titangrm/vol500G
 zookeeper:
@@ -38,7 +38,7 @@ kafka:
     memory: 2Gi
     storage: 300Gi
   connect:
-    image: titangrm/kafka:2.1.0
+    image: titangrm/kafka-connect:2.1.0
     resources:
       cpu: 2048m
       memory: 2Gi

@@ -37,7 +37,7 @@ func main() {
 }
 
 type VolumeInfo struct {
-	Replicas int
+	Nodes []string
 	Size string
 	Path string
 }
@@ -111,7 +111,7 @@ type DeploymentConfig struct {
 	LabelConfig NodeLabels `yaml:"labelConfig"`
 	ConfigVolume VolumeInfo `yaml:"configVolume"`
 	StreamVolume VolumeInfo `yaml:"streamVolume"`
-	AnalysisVolume VolumeInfo `yaml:"analysisVolume"`
+	DataVolume VolumeInfo `yaml:"dataVolume"`
 	Zookeeper ZookeeperConfig `yaml:"zookeeper"`
 	Kafka KafkaConfig `yaml:"kafka"`
 	Elasticsearch ElasticsearchConfig `yaml:"elasticsearch"`

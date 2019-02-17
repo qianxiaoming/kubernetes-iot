@@ -1,15 +1,15 @@
-{{ range int2slice .ConfigVolume.Replicas }}
+{{ range $i, $v := .ConfigVolume.Nodes }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: {{ $.Namespace }}-config-{{ . }}
+  name: {{ $.Namespace }}-config-{{ $i }}
 spec:
   capacity:
     storage: {{ $.ConfigVolume.Size }}
   volumeMode: Filesystem
   accessModes:
   - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Delete
+  persistentVolumeReclaimPolicy: Retain
   storageClassName: {{ $.Namespace }}-storage
   local:
     path: {{ $.ConfigVolume.Path }}
@@ -19,20 +19,25 @@ spec:
       - matchExpressions:
         - key: {{ $.LabelConfig.Storage }}
           operator: Exists
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - {{ $v }}
 ---
 {{ end }}
-{{ range int2slice .StreamVolume.Replicas }}
+{{ range $i, $v := .StreamVolume.Nodes }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: {{ $.Namespace }}-stream-{{ . }}
+  name: {{ $.Namespace }}-stream-{{ $i }}
 spec:
   capacity:
     storage: {{ $.StreamVolume.Size }}
   volumeMode: Filesystem
   accessModes:
   - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Delete
+  persistentVolumeReclaimPolicy: Retain
   storageClassName: {{ $.Namespace }}-storage
   local:
     path: {{ $.StreamVolume.Path }}
@@ -42,28 +47,38 @@ spec:
       - matchExpressions:
         - key: {{ $.LabelConfig.Storage }}
           operator: Exists
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - {{ $v }}
 ---
 {{ end }}
-{{ range int2slice .AnalysisVolume.Replicas }}
+{{ range $i, $v := .DataVolume.Nodes }}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: {{ $.Namespace }}-analysis-{{ . }}
+  name: {{ $.Namespace }}-data-{{ $i }}
 spec:
   capacity:
-    storage: {{ $.AnalysisVolume.Size }}
+    storage: {{ $.DataVolume.Size }}
   volumeMode: Filesystem
   accessModes:
   - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Delete
+  persistentVolumeReclaimPolicy: Retain
   storageClassName: {{ $.Namespace }}-storage
   local:
-    path: {{ $.AnalysisVolume.Path }}
+    path: {{ $.DataVolume.Path }}
   nodeAffinity:
     required:
       nodeSelectorTerms:
       - matchExpressions:
         - key: {{ $.LabelConfig.Storage }}
           operator: Exists
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - {{ $v }}
 ---
 {{ end }}

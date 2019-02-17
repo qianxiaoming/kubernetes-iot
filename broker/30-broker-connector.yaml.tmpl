@@ -89,7 +89,7 @@ spec:
         image: {{ .Kafka.Image }}
         env:
         - name: BROKER_REPLICAS
-          value: {{ .Broker.Replicas }}
+          value: "{{ .Broker.Replicas }}"
         - name: KAFKA_SERVER
           value: {{ .Kafka.AppName }}-server
         - name: KAFKA_SERVER_PORT
